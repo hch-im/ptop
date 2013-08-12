@@ -317,6 +317,27 @@ static void showhelp(int helpline)
 
 #define LEAST_COLUMS 30
 
+void
+persists_process_energy(time_t now, float ecpu, float emem, float entw, float edisk, struct process_info* pst)
+{
+  struct process_energy processEnergy;
+  processEnergy.pid = pst->pid;
+  processEnergy.time = now;
+  processEnergy.ecpu = ecpu;
+  processEnergy.emem = emem;
+  processEnergy.enet = entw;
+  processEnergy.edisk = edisk;
+  processEnergy.cmdline = malloc(sizeof(char) * strlen(pst->cmdline));
+  strcpy(processEnergy.cmdline, pst->cmdline);
+  insert_process_energy(&processEnergy);
+}
+
+void
+persist_device_energy(struct device_energy* deviceEnergy)
+{
+  insert_device_energy(&*deviceEnergy);
+}
+
 int show_proc_stat(struct process_info *pst_list, int amount, time_t now)
 {
 	time_t		curtime;
@@ -417,7 +438,7 @@ int show_proc_stat(struct process_info *pst_list, int amount, time_t now)
 	}
 
 	int tlength = interval;
-	struct device_energy pe;
+	struct device_energy deviceEnergy;
 	int lenavail2 	= COLS;
 	int len2 = lenavail2/7;
 	sprintf(format3, "%%-%ds%%-%ds%%-%ds%%-%ds%%-%ds%%-%ds%%-%ds", len2, len2, len2, len2, len2, len2, lenavail2 - 6 * len2);
@@ -434,10 +455,13 @@ int show_proc_stat(struct process_info *pst_list, int amount, time_t now)
 
 	amount = amount > SHOW_NUM ? SHOW_NUM:amount;
 	sprintf(format3, "%%-%ds%%-%d.3f%%-%d.3f%%-%d.3f%%-%d.3f%%-%d.3f%%-%ds\n", len2, len2, len2, len2, len2, len2, lenavail2 - 6 * len2);
-	systemEnergy(tlength, now, &pe);
-	etotalsys = pe.ecpu + pe.edisk + pe.emem;
+	systemEnergy(tlength, now, &deviceEnergy);
+
+    persist_device_energy(&deviceEnergy);
+
+	etotalsys = deviceEnergy.ecpu + deviceEnergy.edisk + deviceEnergy.emem;
 	printw(format3,
-				"Total", 100.0f, pe.ecpu, pe.edisk, pe.enet, pe.emem, "");
+				"Total", 100.0f, deviceEnergy.ecpu, deviceEnergy.edisk, deviceEnergy.enet, deviceEnergy.emem, "");
 
 	sprintf(format3, "%%-%dd%%-%d.3f%%-%d.3f%%-%d.3f%%-%d.3f%%-%d.3f%%-%ds", len2, len2, len2, len2, len2, len2, lenavail2 - 6 * len2);
 
@@ -453,6 +477,9 @@ int show_proc_stat(struct process_info *pst_list, int amount, time_t now)
 		percent = (etotalsys> 0)?eall / etotalsys * 100 : 0;
 		printw(format3,
 					pst->pid, percent, ecpu, edisk, entw, emem, pst->cmdline);
+
+        persists_process_energy(now, ecpu, emem, entw, edisk, pst);
+
 		refresh();
 	}
 
