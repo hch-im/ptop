@@ -29,7 +29,7 @@ sys_perf_event_open(struct perf_event_attr *attr,
 	attr->size = sizeof(*attr);
 	//This system call is defined in asm/unistd.h, in the latest linux kernel
 	//it's name has been changed to __NR_perf_event_open .
-	return syscall(__NR_perf_counter_open, attr, pid, cpu, group_fd, flags);
+	return syscall(__NR_perf_event_open, attr, pid, cpu, group_fd, flags);
 }
 
 int create_perf_stat_counter(int pid, int system_wide);
