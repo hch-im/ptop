@@ -337,7 +337,7 @@ void systemEnergy(int length, time_t now, struct device_energy * pe){
 	}
 	else {
 		// code to compute energy
-		sprintf(query, "SELECT s.netsend, s.netrcv, s. diskread, s.diskwrite,"
+		sprintf(query, "SELECT s.netsend, s.netrcv, s.diskread, s.diskwrite,"
 				" s.cpupower, s.memaccess, s.itv FROM sys_info s WHERE s.time>(%ld) and s.time <=%ld ", now-length, now);
 		/* send query to database */
 		if (mysql_real_query(conn, query, (unsigned int) strlen(query))) {
